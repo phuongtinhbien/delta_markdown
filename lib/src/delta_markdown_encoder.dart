@@ -16,6 +16,10 @@ class DeltaMarkdownEncoder extends Converter<String, String> {
   late Style currentInlineStyle;
 
   late List<String> currentBlockLines;
+  static final Set<String> inlineKeysWithEndTag = {
+    Attribute.underline.key,
+    Attribute.strikeThrough.key,
+  };
 
   /// Converts the [input] delta to Markdown.
   @override
@@ -88,6 +92,7 @@ class DeltaMarkdownEncoder extends Converter<String, String> {
       currentInlineStyle.attributes.removeWhere((_, v) => v == value);
     }
 
+    List<Attribute<dynamic>> _inlineKeysWithEndTags = [];
     // Now open any new styles.
     for (final attribute in style.attributes.values) {
       // TODO(tillf): Is block correct?
@@ -95,6 +100,10 @@ class DeltaMarkdownEncoder extends Converter<String, String> {
         continue;
       }
       if (currentInlineStyle.containsKey(attribute.key)) {
+        continue;
+      }
+      if (inlineKeysWithEndTag.contains(attribute.key)) {
+        _inlineKeysWithEndTags.add(attribute);
         continue;
       }
       final originalText = text;
@@ -106,8 +115,22 @@ class DeltaMarkdownEncoder extends Converter<String, String> {
       _writeAttribute(buffer, attribute);
     }
 
+    if (_inlineKeysWithEndTags.isEmpty) {
+      buffer.write(text);
+    } else {
+      for (final attribute in _inlineKeysWithEndTags) {
+        _writeAttribute(
+          buffer,
+          attribute,
+        );
+      }
+      buffer.write(text);
+      for (final attribute in _inlineKeysWithEndTags) {
+        _writeAttribute(buffer, attribute, close: true);
+      }
+    }
+
     // Write the text itself
-    buffer.write(text);
     currentInlineStyle = style;
   }
 
@@ -158,7 +181,7 @@ class DeltaMarkdownEncoder extends Converter<String, String> {
     if (embed.type == 'image') {
       _writeEmbedTag(lineBuffer, embed);
       _writeEmbedTag(lineBuffer, embed, close: true);
-    } else if(embed.type == 'divider') {
+    } else if (embed.type == 'divider') {
       _writeEmbedTag(lineBuffer, embed);
       _writeEmbedTag(lineBuffer, embed, close: true);
     }
@@ -210,12 +233,15 @@ class DeltaMarkdownEncoder extends Converter<String, String> {
   void _writeAttribute(
     StringBuffer buffer,
     Attribute attribute, {
+    String text = '',
     bool close = false,
   }) {
     if (attribute.key == Attribute.bold.key) {
       buffer.write('**');
     } else if (attribute.key == Attribute.italic.key) {
       buffer.write('_');
+    } else if (attribute.key == Attribute.underline.key) {
+      buffer.write(!close ? '<ins>' : '$text<?ins>');
     } else if (attribute.key == Attribute.link.key) {
       buffer.write(!close ? '[' : '](${attribute.value})');
     } else if (attribute == Attribute.codeBlock) {
