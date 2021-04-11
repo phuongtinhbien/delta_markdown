@@ -21,7 +21,7 @@ void main() {
 
 Currently, these elements are supported:
 
-- Bold
+- **Bold
 - Italic
 - Link
 - Blockquote
@@ -39,7 +39,7 @@ Does not support the following elements, because Markdown does not support them:
 - Size
 - Strikethrough
 - Superscript/Subscript
-- <ins>Underline</ins>
+- **<ins>Underline</ins>**
 - Text Alignment
 - Text Direction
 - Formula
