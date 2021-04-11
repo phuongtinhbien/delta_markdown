@@ -39,7 +39,7 @@ Does not support the following elements, because Markdown does not support them:
 - Size
 - Strikethrough
 - Superscript/Subscript
-- Underline
+- <ins>Underline</ins>
 - Text Alignment
 - Text Direction
 - Formula
