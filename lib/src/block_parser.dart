@@ -658,7 +658,8 @@ abstract class ListSyntax extends BlockSyntax {
         }
         // Add a blank line to the current list item.
         childLines.add('');
-      } else if (indent != null && indent.length <= leadingExpandedTabLength) {
+      }
+      else if (indent != null && indent.length <= leadingExpandedTabLength) {
         // Strip off indent and add to current item.
         final line = parser.current
             .replaceFirst(leadingSpace, ' ' * leadingExpandedTabLength)

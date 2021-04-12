@@ -40,10 +40,11 @@ class ExtensionSet {
     const SetextHeaderWithIdSyntax(),
     const TableSyntax()
   ], [
-    InlineHtmlSyntax(),
+    // InlineHtmlSyntax(),
     StrikethroughSyntax(),
     EmojiSyntax(),
     AutolinkExtensionSyntax(),
+    UnderlineSyntax(),
   ]);
 
   /// The [gitHubFlavored] extension set is close to compliance with the [GitHub
@@ -54,9 +55,11 @@ class ExtensionSet {
     const FencedCodeBlockSyntax(),
     const TableSyntax()
   ], [
-    InlineHtmlSyntax(),
+    // InlineHtmlSyntax(),
     StrikethroughSyntax(),
     AutolinkExtensionSyntax(),
+    UnderlineSyntax(),
+
   ]);
 
   final List<BlockSyntax> blockSyntaxes;

@@ -36,7 +36,7 @@ class InlineParser {
       // Custom link resolvers go after the generic text syntax.
       ..insertAll(1, [
         LinkSyntax(linkResolver: document.linkResolver),
-        ImageSyntax(linkResolver: document.imageLinkResolver)
+        ImageSyntax(linkResolver: document.imageLinkResolver),
       ]);
   }
 
@@ -57,7 +57,8 @@ class InlineParser {
     TagSyntax(r'\*+', requiresDelimiterRun: true),
     // Parse "__strong__" and "_emphasis_" tags.
     TagSyntax(r'_+', requiresDelimiterRun: true),
-    CodeSyntax(),
+    UnderlineSyntax(),
+    CodeSyntax()
     // We will add the LinkSyntax once we know about the specific link resolver.
   ]);
 
@@ -163,10 +164,8 @@ abstract class InlineSyntax {
     if (startMatch == null) {
       return false;
     }
-
     // Write any existing plain text up to this point.
     parser.writeText();
-
     if (onMatch(parser, startMatch)) {
       parser.consume(startMatch[0]!.length);
     }
@@ -284,17 +283,21 @@ class AutolinkExtensionSyntax extends InlineSyntax {
   // Autolinks can only come at the beginning of a line, after whitespace, or
   // any of the delimiting characters *, _, ~, and (.
   static const start = r'(?:^|[\s*_~(>])';
+
   // An extended url autolink will be recognized when one of the schemes
   // http://, https://, or ftp://, followed by a valid domain
   static const scheme = r'(?:(?:https?|ftp):\/\/|www\.)';
+
   // A valid domain consists of alphanumeric characters, underscores (_),
   // hyphens (-) and periods (.). There must be at least one period, and no
   // underscores may be present in the last two segments of the domain.
   static const domainPart = r'\w\-';
   static const domain = '[$domainPart][$domainPart.]+';
+
   // A valid domain consists of alphanumeric characters, underscores (_),
   // hyphens (-) and periods (.).
   static const path = r'[^\s<]*';
+
   // Trailing punctuation (specifically, ?, !, ., ,, :, *, _, and ~) will not
   // be considered part of the autolink
   static const truncatingPunctuationPositive = r'[?!.,:*_~]';
@@ -409,6 +412,7 @@ class _DelimiterRun {
       this.isFollowedByPunctuation});
 
   static const String punctuation = r'''!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~''';
+
   // TODO(srawlins): Unicode whitespace
   static const String whitespace = ' \t\r\n';
 
@@ -1268,4 +1272,23 @@ class InlineLink {
 
   final String destination;
   final String? title;
+}
+
+class UnderlineSyntax extends TagSyntax {
+  UnderlineSyntax() : super(r'<ins>', end: r'</ins>', );
+
+  @override
+  bool onMatchEnd(InlineParser parser, Match match, TagState state) {
+    final runLength = match.group(0)!.length;
+    final matchStart = parser.pos;
+    final matchEnd = parser.pos + runLength - 1;
+    final delimiterRun = _DelimiterRun.tryParse(parser, matchStart, matchEnd)!;
+    // final endText = parser.source.indexOf('</ins>');
+    // parser.writeTextRange(5, endText);
+    if (!delimiterRun.isRightFlanking!) {
+      return false;
+    }
+    parser.addNode(Element('ins', state.children));
+    return true;
+  }
 }

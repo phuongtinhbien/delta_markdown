@@ -102,10 +102,10 @@ class DeltaMarkdownEncoder extends Converter<String, String> {
       if (currentInlineStyle.containsKey(attribute.key)) {
         continue;
       }
-      if (inlineKeysWithEndTag.contains(attribute.key)) {
-        _inlineKeysWithEndTags.add(attribute);
-        continue;
-      }
+      // if (inlineKeysWithEndTag.contains(attribute.key)) {
+      //   _inlineKeysWithEndTags.add(attribute);
+      //   continue;
+      // }
       final originalText = text;
       text = text.trimLeft();
       final padding = ' ' * (originalText.length - text.length);
@@ -125,11 +125,11 @@ class DeltaMarkdownEncoder extends Converter<String, String> {
         );
       }
       buffer.write(text);
-      for (final attribute in _inlineKeysWithEndTags) {
-        _writeAttribute(buffer, attribute, close: true);
-      }
+      // for (final attribute in _inlineKeysWithEndTags) {
+      //   _writeAttribute(buffer, attribute, close: true);
+      // }
+      _inlineKeysWithEndTags.clear();
     }
-
     // Write the text itself
     currentInlineStyle = style;
   }
@@ -241,7 +241,7 @@ class DeltaMarkdownEncoder extends Converter<String, String> {
     } else if (attribute.key == Attribute.italic.key) {
       buffer.write('_');
     } else if (attribute.key == Attribute.underline.key) {
-      buffer.write(!close ? '<ins>' : '$text<?ins>');
+      buffer.write(!close ? '<ins>' : '$text</ins>');
     } else if (attribute.key == Attribute.link.key) {
       buffer.write(!close ? '[' : '](${attribute.value})');
     } else if (attribute == Attribute.codeBlock) {
@@ -272,6 +272,9 @@ class DeltaMarkdownEncoder extends Converter<String, String> {
       buffer.write('## ');
     } else if (block.key == Attribute.h3.key && block.value == 3) {
       buffer.write('### ');
+    } else if (block.key == Attribute.list.key) {
+      final check = block.value == 'checked' ? 'x' : ' ';
+      buffer.write('- [$check] ');
     } else {
       throw ArgumentError('Cannot handle block $block');
     }

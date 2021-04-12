@@ -6,13 +6,15 @@ import 'package:flutter_quill/models/quill_delta.dart';
 
 import 'ast.dart' as ast;
 import 'document.dart';
+import 'extension_set.dart';
 
 class DeltaMarkdownDecoder extends Converter<String, String> {
   @override
   String convert(String input) {
     final lines = input.replaceAll('\r\n', '\n').split('\n');
 
-    final markdownDocument = Document().parseLines(lines);
+    final markdownDocument =
+        Document(extensionSet: ExtensionSet.gitHubFlavored).parseLines(lines);
 
     return jsonEncode(_DeltaVisitor().convert(markdownDocument).toJson());
   }
@@ -218,6 +220,8 @@ class _DeltaVisitor implements ast.NodeVisitor {
         return Attribute.italic;
       case 'strong':
         return Attribute.bold;
+      case 'ins':
+        return Attribute.underline;
       case 'ul':
         return Attribute.ul;
       case 'ol':
@@ -226,6 +230,8 @@ class _DeltaVisitor implements ast.NodeVisitor {
         return Attribute.codeBlock;
       case 'blockquote':
         return Attribute.blockQuote;
+      case 'del':
+        return Attribute.strikeThrough;
       case 'h1':
         return Attribute.h1;
       case 'h2':
