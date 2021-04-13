@@ -136,16 +136,13 @@ void main() {
     const expected = '![](http://image.jpg)\n';
 
     final result = deltaToMarkdown(delta);
-
     expect(result, expected);
   });
   test('Works on one line underline string', () {
     const delta =
         r'[{"insert":"Test","attributes":{"underline":true}},{"insert":"\n"}]';
     const expected = '<ins>Test</ins>\n';
-
     final result = deltaToMarkdown(delta);
-
     expect(result, expected);
   });
 
@@ -153,7 +150,6 @@ void main() {
     const delta =
         r'[{"attributes":{"italic":true,"bold":true, "underline":true},"insert":"Foo"},{"insert":"\n"}]';
     const expected = '_**<ins>Foo</ins>**_\n';
-
     final result = deltaToMarkdown(delta);
     expect(result, expected);
   });
