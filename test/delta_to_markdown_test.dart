@@ -145,7 +145,6 @@ void main() {
 
     final result = deltaToMarkdown(delta);
 
-    print(result);
     expect(result, expected);
   });
 
@@ -155,7 +154,6 @@ void main() {
     const expected = '_**<ins>Foo</ins>**_\n';
 
     final result = deltaToMarkdown(delta);
-    print(result);
     expect(result, expected);
   });
 }

@@ -1275,7 +1275,11 @@ class InlineLink {
 }
 
 class UnderlineSyntax extends TagSyntax {
-  UnderlineSyntax() : super(r'<ins>', end: r'</ins>', );
+  UnderlineSyntax()
+      : super(
+          r'<ins>',
+          end: r'</ins>',
+        );
 
   @override
   bool onMatchEnd(InlineParser parser, Match match, TagState state) {
