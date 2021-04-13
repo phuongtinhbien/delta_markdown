@@ -42,7 +42,9 @@ final _oneOrMoreWhitespacePattern = RegExp('[ \n\r\t]+');
 /// Contains a dummy group at [2], so that the groups in [_ulPattern] and
 /// [_olPattern] match up; in both, [2] is the length of the number that begins
 /// the list marker.
-final _ulPattern = RegExp(r'^([ ]{0,3})()([*+-])(([ \t])([ \t]*)(.*))?$');
+final _ulPattern = RegExp(r'^([ ]{0,3})()([*+])(([ \t])([ \t]*)(.*))?$');
+final _checkedBoxPattern = RegExp(r'- \[x]( \t)?(.*)?');
+final _unCheckedBoxPattern = RegExp(r'- \[( )?]( \t)?(.*)?');
 
 /// A line starting with a number like `123.`. May have up to three leading
 /// spaces before the marker and any number of spaces or tabs after.
@@ -98,7 +100,9 @@ class BlockParser {
     const HorizontalRuleSyntax(),
     const UnorderedListSyntax(),
     const OrderedListSyntax(),
-    const ParagraphSyntax()
+    const CheckedBoxListSyntax(),
+    const UnCheckedBoxListSyntax(),
+    const ParagraphSyntax(),
   ];
 
   /// Gets the current line.
@@ -193,6 +197,7 @@ abstract class BlockSyntax {
       if (match == null) {
         break;
       }
+
       childLines.add(match[1]);
       parser.advance();
     }
@@ -293,6 +298,8 @@ class SetextHeaderSyntax extends BlockSyntax {
           _blockquotePattern.hasMatch(line) ||
           _hrPattern.hasMatch(line) ||
           _ulPattern.hasMatch(line) ||
+          _checkedBoxPattern.hasMatch(line) ||
+          _unCheckedBoxPattern.hasMatch(line) ||
           _olPattern.hasMatch(line) ||
           _emptyPattern.hasMatch(line));
 }
@@ -618,6 +625,8 @@ abstract class ListSyntax extends BlockSyntax {
     _hrPattern,
     _indentPattern,
     _ulPattern,
+    _checkedBoxPattern,
+    _unCheckedBoxPattern,
     _olPattern
   ];
 
@@ -658,8 +667,7 @@ abstract class ListSyntax extends BlockSyntax {
         }
         // Add a blank line to the current list item.
         childLines.add('');
-      }
-      else if (indent != null && indent.length <= leadingExpandedTabLength) {
+      } else if (indent != null && indent.length <= leadingExpandedTabLength) {
         // Strip off indent and add to current item.
         final line = parser.current
             .replaceFirst(leadingSpace, ' ' * leadingExpandedTabLength)
@@ -708,9 +716,15 @@ abstract class ListSyntax extends BlockSyntax {
         // End the current list item and start a one.
         endItem();
         childLines.add(restWhitespace + content);
+      } else if (tryMatch(_checkedBoxPattern)) {
+        final line = parser.current.replaceAll('- [x] ', '');
+        childLines.add(line);
+      }  else if (tryMatch(_unCheckedBoxPattern)) {
+        final line = parser.current.replaceAll('- [] ', '');
+        childLines.add(line);
       } else if (BlockSyntax.isAtBlockEnd(parser)) {
-        // Done with the list.
-        break;
+          break;
+        // Done with the list
       } else {
         // If the previous item is a blank line, this means we're done with the
         // list and are starting a top-level paragraph.
@@ -718,7 +732,6 @@ abstract class ListSyntax extends BlockSyntax {
           parser.encounteredBlankLine = true;
           break;
         }
-
         // Anything else is paragraph continuation text.
         childLines.add(parser.current);
       }
@@ -757,7 +770,6 @@ abstract class ListSyntax extends BlockSyntax {
         }
       }
     }
-
     if (listTag == 'ol' && startNumber != 1) {
       return Element(listTag, itemNodes)..attributes['start'] = '$startNumber';
     } else {
@@ -808,6 +820,26 @@ class UnorderedListSyntax extends ListSyntax {
 
   @override
   String get listTag => 'ul';
+}
+
+/// Parses checked lists.
+class CheckedBoxListSyntax extends ListSyntax {
+  const CheckedBoxListSyntax();
+
+  @override
+  RegExp get pattern => _checkedBoxPattern;
+
+  @override
+  String get listTag => 'checked';
+}
+class UnCheckedBoxListSyntax extends ListSyntax {
+  const UnCheckedBoxListSyntax();
+
+  @override
+  RegExp get pattern => _unCheckedBoxPattern;
+
+  @override
+  String get listTag => 'unchecked';
 }
 
 /// Parses ordered lists.
@@ -934,7 +966,7 @@ class TableSyntax extends BlockSyntax {
 class ParagraphSyntax extends BlockSyntax {
   const ParagraphSyntax();
 
-  static final _reflinkDefinitionStart = RegExp(r'[ ]{0,3}\[');
+  static final _reflinkDefinitionStart = RegExp(r'^ {0,3}\[');
 
   static final _whitespacePattern = RegExp(r'^\s*$');
 
@@ -948,12 +980,12 @@ class ParagraphSyntax extends BlockSyntax {
   Node parse(BlockParser parser) {
     final childLines = <String>[];
 
+    print(parser.lines);
     // Eat until we hit something that ends a paragraph.
     while (!BlockSyntax.isAtBlockEnd(parser)) {
       childLines.add(parser.current);
       parser.advance();
     }
-
     final paragraphLines = _extractReflinkDefinitions(parser, childLines);
     if (paragraphLines == null) {
       // Paragraph consisted solely of reference link definitions.
@@ -1005,7 +1037,6 @@ class ParagraphSyntax extends BlockSyntax {
         i = j;
         break;
       }
-
       // It may be that there is a reflink definition starting at [i], but it
       // does not extend all the way to [j], such as:
       //

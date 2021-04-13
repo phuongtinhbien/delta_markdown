@@ -22,7 +22,7 @@ class DeltaMarkdownDecoder extends Converter<String, String> {
 
 class _DeltaVisitor implements ast.NodeVisitor {
   static final _blockTags =
-      RegExp('h1|h2|h3|h4|h5|h6|hr|pre|ul|ol|blockquote|p|pre');
+      RegExp('h1|h2|h3|h4|h5|h6|hr|pre|ul|ol|blockquote|p|pre|checked|unchecked');
 
   static final _embedTags = RegExp('hr|img');
 
@@ -176,9 +176,9 @@ class _DeltaVisitor implements ast.NodeVisitor {
 
   @override
   void visitElementAfter(ast.Element element) {
-    if (element.tag == 'li' &&
+    if ((element.tag == 'li' &&
         (previousToplevelElement.tag == 'ol' ||
-            previousToplevelElement.tag == 'ul')) {
+            previousToplevelElement.tag == 'ul'))) {
       delta.insert('\n', activeBlockAttribute?.toJson());
     }
 
@@ -238,6 +238,10 @@ class _DeltaVisitor implements ast.NodeVisitor {
         return Attribute.h2;
       case 'h3':
         return Attribute.h3;
+      case 'checked':
+        return Attribute.checked;
+      case 'unchecked':
+        return Attribute.unchecked;
       case 'a':
         final href = el.attributes['href'];
         return LinkAttribute(href);
