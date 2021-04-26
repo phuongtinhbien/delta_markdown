@@ -13,9 +13,7 @@ dependencies:
   charcode: ^1.2.0
   collection: ^1.15.0
   flutter_quill:
-    git:
-      url: https://github.com/phuongtinhbien/flutter-quill.git
-      ref: fix2
+    git: https://github.com/phuongtinhbien/flutter-quill.git
 
 dev_dependencies:
   flutter_test:
