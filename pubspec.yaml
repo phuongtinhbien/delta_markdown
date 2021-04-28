@@ -13,7 +13,9 @@ dependencies:
   charcode: ^1.2.0
   collection: ^1.15.0
   flutter_quill:
-    git: https://github.com/phuongtinhbien/flutter-quill.git
+    git: 
+      url: https://github.com/phuongtinhbien/flutter-quill.git
+      ref: customize_icon_checkbox
 
 dev_dependencies:
   flutter_test:
